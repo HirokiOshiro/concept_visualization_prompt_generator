@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>概念可視化プロンプト生成アプリ</title>
+    <style>
+        :root {
+            --primary-color: #4a5568;
+            --secondary-color: #2d374851;
+            --accent-color: #3182ce;
+            --success-color: #38a169;
+            --warning-color: #d69e2e;
+            --bg-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-dark: #2d3748;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #edf2f7 100%);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .app-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .wizard-container {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border-color);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 20%;
+            transition: var(--transition);
+        }
+
+        .step-container {
+            padding: 3rem;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-description {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: #fff;
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .tag {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .tag-remove {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 85, 104, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .prompt-output {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            color: white;
+            margin-top: 2rem;
+        }
+
+        .prompt-text {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .copy-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: var(--transition);
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .example-concepts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .example-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(74, 85, 104, 0.3);
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .step-container {
+                padding: 2rem 1.5rem;
+            }
+            
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .example-concepts {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .example-card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .example-concepts {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .example-card {
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="app-title">概念可視化プロンプト生成器</h1>
+            <p class="app-subtitle">あなたの抽象的なアイデアや概念を動的なグラフィックで可視化するためのAIプロンプトを生成します</p>
+        </div>
+
+        <div class="wizard-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- ステップ1: 概念の定義 -->
+            <div class="step-container fade-in" id="step1">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                    </svg>
+                    ステップ 1: 概念を定義する
+                </h2>
+                <p class="step-description">可視化したい概念や抽象的なアイデアを入力してください</p>
+
+                <div class="form-group">
+                    <label class="form-label">メインとなる概念・テーマ</label>
+                    <input type="text" class="form-input" id="mainConcept" placeholder="例: 愛、自由、時間、創造性、調和...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">概念の詳細説明</label>
+                    <textarea class="form-textarea" id="conceptDescription" placeholder="この概念について、あなたがどのように理解し、感じているかを自由に記述してください..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">または、以下の例から選択してカスタマイズ</label>
+                    <div class="example-concepts">
+                        <div class="example-card" data-concept="成長" data-description="種から木へ、学習から習得へ、段階的な変化と発展のプロセス">
+                            <div class="example-title">成長</div>
+                            <div class="example-description">段階的変化と発展</div>
+                        </div>
+                        <div class="example-card" data-concept="調和" data-description="異なる要素が美しく結合し、バランスを保ちながら一つの完全な形を作り出す状態">
+                            <div class="example-title">調和</div>
+                            <div class="example-description">バランスと統合</div>
+                        </div>
+                        <div class="example-card" data-concept="自由" data-description="制約からの解放、無限の可能性、選択の権利、精神的な開放感">
+                            <div class="example-title">自由</div>
+                            <div class="example-description">解放と可能性</div>
+                        </div>
+                        <div class="example-card" data-concept="記憶" data-description="過去の経験が現在に影響を与え、時として曖昧になりながらも心の中に残り続ける">
+                            <div class="example-title">記憶</div>
+                            <div class="example-description">過去と現在の橋渡し</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステップ2: 視覚的要素の選択 -->
+            <div class="step-container hidden" id="step2">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    ステップ 2: 視覚的表現方法を選択
+                </h2>
+                <p class="step-description">あなたの概念に最も適した視覚的表現方法を選んでください（複数選択可）</p>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="geometric" name="visualType">
+                        <span>幾何学的図形</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="organic" name="visualType">
+                        <span>有機的・自然的形状</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="flow" name="visualType">
+                        <span>流動的・液体的表現</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="particle" name="visualType">
+                        <span>粒子・ドット群</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="wave" name="visualType">
+                        <span>波動・振動パターン</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="network" name="visualType">
+                        <span>ネットワーク・接続図</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="spiral" name="visualType">
+                        <span>螺旋・渦巻き</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" value="layered" name="visualType">
+                        <span>層状・階層構造</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- ステップ3: 動きとインタラクション -->
+            <div class="step-container hidden" id="step3">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.82,13.75 18.5,14.54L21.12,16.07C21.68,14.83 22,13.45 22,12C22,6.82 18.05,2.55 13,2.05M12,19A7,7 0 0,1 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12A10,10 0 0,0 12,22C15.3,22 18.23,20.39 20.38,17.92L17.64,16.29C16.29,17.57 14.26,18.43 12,19Z"/>
+                    </svg>
+                    ステップ 3: 動きとインタラクションを定義
+                </h2>
+                <p class="step-description">どのような動きや変化で概念を表現したいかを選択してください</p>
+
+                <div class="form-group">
+                    <label class="form-label">動きのタイプ</label>
+                    <select class="form-select" id="animationType">
+                        <option value="">選択してください</option>
+                        <option value="continuous">連続的な循環運動</option>
+                        <option value="pulsing">脈動・リズム的変化</option>
+                        <option value="growing">成長・拡大する動き</option>
+                        <option value="transforming">形状変化・変身</option>
+                        <option value="interactive">ユーザー操作に反応</option>
+                        <option value="reactive">環境や条件に応答</option>
+                        <option value="emergent">複雑系・創発的パターン</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">時間的要素</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="slow" name="timeAspect">
+                            <span>ゆっくりとした変化</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="rhythmic" name="timeAspect">
+                            <span>リズミカルな反復</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="sudden" name="timeAspect">
+                            <span>突然の変化・転換点</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="cyclical" name="timeAspect">
+                            <span>周期的・季節的変化</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ステップ4: 感情と雰囲気 -->
+            <div class="step-container hidden" id="step4">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12,17.5C14.33,17.5 16.3,16.04 17.11,14H6.89C7.69,16.04 9.67,17.5 12,17.5M8.5,11A1.5,1.5 0 0,0 10,9.5A1.5,1.5 0 0,0 8.5,8A1.5,1.5 0 0,0 7,9.5A1.5,1.5 0 0,0 8.5,11M15.5,11A1.5,1.5 0 0,0 17,9.5A1.5,1.5 0 0,0 15.5,8A1.5,1.5 0 0,0 14,9.5A1.5,1.5 0 0,0 15.5,11M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                    </svg>
+                    ステップ 4: 感情と雰囲気を設定
+                </h2>
+                <p class="step-description">可視化に込めたい感情や雰囲気を選択してください</p>
+
+                <div class="form-group">
+                    <label class="form-label">色彩の印象</label>
+                    <select class="form-select" id="colorMood">
+                        <option value="">選択してください</option>
+                        <option value="warm">暖かい（赤、オレンジ、黄色系）</option>
+                        <option value="cool">涼しい（青、緑、紫系）</option>
+                        <option value="monochrome">モノクロ・グレースケール</option>
+                        <option value="vibrant">鮮やか・活発</option>
+                        <option value="pastel">パステル・穏やか</option>
+                        <option value="gradient">グラデーション・変化</option>
+                        <option value="natural">自然色・アースカラー</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">感情的キーワード（自由記述）</label>
+                    <input type="text" class="form-input" id="emotionalKeywords" placeholder="例: 希望的、神秘的、力強い、繊細、情熱的...">
+                    <div class="tag-input-container" id="keywordTags"></div>
+                </div>
+            </div>
+
+            <!-- ステップ5: 技術仕様 -->
+            <div class="step-container hidden" id="step5">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    ステップ 5: 技術仕様と出力形式
+                </h2>
+                <p class="step-description">実装する技術と出力形式を選択してください</p>
+
+                <div class="form-group">
+                    <label class="form-label">実装技術</label>
+                    <select class="form-select" id="techStack">
+                        <option value="html-css">HTML + CSS（シンプル・軽量）</option>
+                        <option value="html-css-js">HTML + CSS + JavaScript（インタラクティブ）</option>
+                        <option value="svg">SVG アニメーション（ベクターグラフィック）</option>
+                        <option value="canvas">HTML5 Canvas（複雑な描画）</option>
+                        <option value="three-js">Three.js（3D表現）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">対象レベル</label>
+                    <select class="form-select" id="complexityLevel">
+                        <option value="beginner">初心者向け（学習・理解重視）</option>
+                        <option value="intermediate">中級者向け（バランス重視）</option>
+                        <option value="advanced">上級者向け（表現力重視）</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">追加要求（任意）</label>
+                    <textarea class="form-textarea" id="additionalRequirements" placeholder="レスポンシブ対応、アクセシビリティ、特定のブラウザ対応など..."></textarea>
+                </div>
+            </div>
+
+            <!-- プロンプト生成結果 -->
+            <div class="step-container hidden" id="result">
+                <h2 class="step-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"/>
+                    </svg>
+                    生成されたプロンプト
+                </h2>
+                <p class="step-description">以下のプロンプトをClaude等のAIアシスタントに入力して、動的な可視化を生成してください</p>
+
+                <div class="prompt-output">
+                    <div class="prompt-text" id="generatedPrompt"></div>
+                    <button class="copy-button" onclick="copyPrompt()">📋 プロンプトをコピー</button>
+                </div>
+            </div>
+
+            <!-- ナビゲーションボタン -->
+            <div class="navigation-buttons">
+                <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()" disabled>
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z"/>
+                    </svg>
+                    前へ
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                    次へ
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        const keywords = [];
+
+        // ステップ管理
+        function showStep(step) {
+            // 全ステップを非表示
+            for (let i = 1; i <= totalSteps; i++) {
+                document.getElementById(`step${i}`).classList.add('hidden');
+            }
+            document.getElementById('result').classList.add('hidden');
+            
+            // 指定ステップを表示
+            const targetStep = step <= totalSteps ? `step${step}` : 'result';
+            document.getElementById(targetStep).classList.remove('hidden');
+            document.getElementById(targetStep).classList.add('fade-in');
+            
+            // プログレスバー更新
+            const progress = (step / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            
+            // ボタン状態更新
+            document.getElementById('prevBtn').disabled = step === 1;
+            document.getElementById('nextBtn').textContent = step >= totalSteps ? '生成' : '次へ';
+            document.getElementById('nextBtn').innerHTML = step >= totalSteps ? 
+                `生成 <svg class="icon" viewBox="0 0 24 24"><path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9Z"/></svg>` : 
+                `次へ <svg class="icon" viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>`;
+        }
+
+        function nextStep() {
+            if (currentStep >= totalSteps) {
+                generatePrompt();
+                showStep(totalSteps + 1);
+            } else {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        // 例の概念選択
+        document.querySelectorAll('.example-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const concept = this.dataset.concept;
+                const description = this.dataset.description;
+                document.getElementById('mainConcept').value = concept;
+                document.getElementById('conceptDescription').value = description;
+                
+                // 選択状態のハイライト
+                document.querySelectorAll('.example-card').forEach(c => c.style.opacity = '0.7');
+                this.style.opacity = '1';
+            });
+        });
+
+        // キーワードタグ機能
+        document.getElementById('emotionalKeywords').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                addKeywordTag(this.value.trim());
+                this.value = '';
+            }
+        });
+
+        function addKeywordTag(keyword) {
+            if (keywords.includes(keyword)) return;
+            
+            keywords.push(keyword);
+            const container = document.getElementById('keywordTags');
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${keyword}
+                <button class="tag-remove" onclick="removeKeywordTag('${keyword}')">&times;</button>
+            `;
+            container.appendChild(tag);
+        }
+
+        function removeKeywordTag(keyword) {
+            const index = keywords.indexOf(keyword);
+            if (index > -1) {
+                keywords.splice(index, 1);
+                document.getElementById('keywordTags').innerHTML = '';
+                keywords.forEach(kw => addKeywordTag(kw));
+            }
+        }
+
+        // プロンプト生成
+        function generatePrompt() {
+            const data = {
+                concept: document.getElementById('mainConcept').value,
+                description: document.getElementById('conceptDescription').value,
+                visualTypes: Array.from(document.querySelectorAll('input[name="visualType"]:checked')).map(cb => cb.value),
+                animationType: document.getElementById('animationType').value,
+                timeAspects: Array.from(document.querySelectorAll('input[name="timeAspect"]:checked')).map(cb => cb.value),
+                colorMood: document.getElementById('colorMood').value,
+                emotionalKeywords: keywords,
+                techStack: document.getElementById('techStack').value,
+                complexity: document.getElementById('complexityLevel').value,
+                additional: document.getElementById('additionalRequirements').value
+            };
+
+            const prompt = createDetailedPrompt(data);
+            document.getElementById('generatedPrompt').textContent = prompt;
+        }
+
+        function createDetailedPrompt(data) {
+            let prompt = `「${data.concept}」の概念を動的なグラフィックで可視化するWebアプリケーションを作成してください。
+
+【概念の詳細】
+${data.description}
+
+【視覚的表現】
+`;
+
+            if (data.visualTypes.length > 0) {
+                prompt += `- 使用する視覚要素: ${data.visualTypes.join('、')}\n`;
+            }
+
+            if (data.animationType) {
+                prompt += `- 動きのタイプ: ${data.animationType}\n`;
+            }
+
+            if (data.timeAspects.length > 0) {
+                prompt += `- 時間的要素: ${data.timeAspects.join('、')}\n`;
+            }
+
+            if (data.colorMood) {
+                prompt += `- 色彩設計: ${data.colorMood}\n`;
+            }
+
+            if (data.emotionalKeywords.length > 0) {
+                prompt += `- 感情的キーワード: ${data.emotionalKeywords.join('、')}\n`;
+            }
+
+            prompt += `
+【技術仕様】
+- 実装技術: ${data.techStack}
+- 複雑度レベル: ${data.complexity}
+`;
+
+            if (data.additional) {
+                prompt += `- 追加要求: ${data.additional}\n`;
+            }
+
+            prompt += `
+【期待する成果物】
+1. インタラクティブで美しい動的グラフィックアニメーション
+2. 概念の本質を直感的に理解できる視覚表現
+3. 教育現場で活用できるレベルの完成度
+4. レスポンシブ対応で様々なデバイスで動作
+5. コードの可読性と拡張性を重視
+
+【重要な観点】
+- 概念の抽象性を具体的な視覚体験に変換
+- ユーザーが概念について新たな気づきを得られる表現
+- 美的価値と教育的価値の両立
+- インタラクションによる理解の深化
+
+このプロンプトに基づいて、創造的で教育的価値の高い可視化アプリケーションを作成してください。`;
+
+            return prompt;
+        }
+
+        function copyPrompt() {
+            const promptText = document.getElementById('generatedPrompt').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = '✅ コピーしました！';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        // 初期化
+        showStep(1);
+    </script>
+</body>
+</html>
