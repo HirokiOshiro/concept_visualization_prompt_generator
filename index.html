@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>概念可視化プロンプト生成ツール</title>
+    <title>概念可視化プロンプト生成アプリ</title>
     <style>
         :root {
             --primary-color: #4a5568;
@@ -311,6 +311,102 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .demo-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .demo-header {
+            padding: 2.5rem 3rem 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+        }
+
+        .demo-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .demo-description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .demo-content {
+            position: relative;
+            background: #f8f9fa;
+        }
+
+        .demo-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            display: block;
+            background: white;
+        }
+
+        .demo-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        .demo-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .demo-controls {
+            padding: 1.5rem 3rem;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .demo-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, var(--success-color), #48bb78);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
         .icon {
             width: 24px;
             height: 24px;
@@ -339,6 +435,37 @@
             .example-card {
                 padding: 1rem;
             }
+
+            /* 実例デモセクションのモバイル対応 */
+            .demo-header {
+                padding: 2rem 1.5rem 1.5rem;
+            }
+
+            .demo-title {
+                font-size: 1.5rem;
+            }
+
+            .demo-description {
+                font-size: 1rem;
+            }
+
+            .demo-iframe {
+                height: 400px;
+            }
+
+            .demo-controls {
+                padding: 1rem 1.5rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .demo-info {
+                font-size: 0.8rem;
+            }
+
+            .demo-badge {
+                margin: 0.5rem 0 0 0;
+            }
         }
 
         @media (max-width: 480px) {
@@ -350,14 +477,75 @@
             .example-card {
                 padding: 0.8rem;
             }
+
+            /* さらに小さな画面での実例デモ対応 */
+            .demo-header {
+                padding: 1.5rem 1rem;
+            }
+
+            .demo-title {
+                font-size: 1.3rem;
+            }
+
+            .demo-description {
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+
+            .demo-iframe {
+                height: 300px;
+            }
+
+            .demo-controls {
+                padding: 0.8rem 1rem;
+            }
+
+            .demo-info {
+                font-size: 0.75rem;
+                line-height: 1.4;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1 class="app-title">概念可視化プロンプト生成ツール</h1>
+            <h1 class="app-title">概念可視化プロンプト生成器</h1>
             <p class="app-subtitle">あなたの抽象的なアイデアや概念を動的なグラフィックで可視化するためのAIプロンプトを生成します</p>
+        </div>
+
+        <!-- 実例デモセクション -->
+        <div class="demo-section fade-in">
+            <div class="demo-header">
+                <h2 class="demo-title">生成結果の実例</h2>
+                <p class="demo-description">
+                    このツールで生成したプロンプトを使って作成された「創造性」の可視化アニメーション。
+                    マウス操作でノードを探索し、接続を生成することで創造のプロセスを体験できます。
+                    <span class="demo-badge">インタラクティブ</span>
+                </p>
+            </div>
+            <div class="demo-content">
+                <div class="demo-loading" id="demoLoading">
+                    <div class="demo-spinner"></div>
+                    <span>実例を読み込み中...</span>
+                </div>
+                <iframe 
+                    id="demoIframe"
+                    class="demo-iframe" 
+                    src="./creativity_visualization.html"
+                    title="創造性可視化の実例"
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+                    onload="hideLoadingSpinner()"
+                    onerror="handleDemoError()"
+                    style="opacity: 0; transition: opacity 0.3s ease;">
+                </iframe>
+            </div>
+            <div class="demo-controls">
+                <div class="demo-info">
+                    💡 <strong>操作方法:</strong> マウス移動で探索、クリックで接続生成、長押しでネットワーク形成
+                </div>
+            </div>
         </div>
 
         <div class="wizard-container">
@@ -783,8 +971,58 @@ ${data.description}
             });
         }
 
+        // 実例デモ関連の関数
+        function hideLoadingSpinner() {
+            const loading = document.getElementById('demoLoading');
+            const iframe = document.getElementById('demoIframe');
+            
+            if (loading) {
+                loading.style.display = 'none';
+            }
+            if (iframe) {
+                iframe.style.opacity = '1';
+            }
+        }
+
+        // エラーハンドリング
+        function handleDemoError() {
+            const loading = document.getElementById('demoLoading');
+            const iframe = document.getElementById('demoIframe');
+            
+            if (loading) {
+                loading.innerHTML = `
+                    <div style="color: var(--warning-color);">
+                        ⚠️ 実例の読み込みに失敗しました
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">
+                        ページを更新して再試行してください
+                    </div>
+                `;
+            }
+            if (iframe) {
+                iframe.style.display = 'none';
+            }
+        }
+
+        // デモセクションの初期化
+        function initializeDemoSection() {
+            const iframe = document.getElementById('demoIframe');
+            if (iframe) {
+                // タイムアウトでエラーハンドリング（10秒後）
+                setTimeout(() => {
+                    if (iframe.style.opacity === '0') {
+                        handleDemoError();
+                    }
+                }, 10000);
+
+                // エラーイベントハンドリング
+                iframe.onerror = handleDemoError;
+            }
+        }
+
         // 初期化
         showStep(1);
+        initializeDemoSection();
     </script>
 </body>
 </html>
