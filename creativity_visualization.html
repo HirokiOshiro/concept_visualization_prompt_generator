@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>創造性の可視化 - Creativity Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 300;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: #7f8c8d;
+            font-weight: 300;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            min-height: 400px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #creativityCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .instructions {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 400;
+        }
+
+        .instructions p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #5a6c7d;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 2px solid #34495e;
+            background: transparent;
+            color: #34495e;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: #34495e;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 73, 94, 0.2);
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .canvas-container {
+                height: 60vh;
+                min-height: 300px;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header fade-in">
+            <h1 class="title">創造性の可視化</h1>
+            <p class="subtitle">Visualization of Creativity - 探索と発見のプロセス</p>
+        </div>
+
+        <div class="canvas-container fade-in">
+            <canvas id="creativityCanvas"></canvas>
+        </div>
+
+        <div class="instructions fade-in">
+            <h3>インタラクションガイド</h3>
+            <p><strong>マウス移動:</strong> 要素を探索し、潜在的な関連性を発見</p>
+            <p><strong>クリック:</strong> 新しい接続を生成し、創造のプロセスを促進</p>
+            <p><strong>長押し:</strong> 複雑なネットワーク構造を形成</p>
+            
+            <div class="controls">
+                <button class="btn" onclick="visualization.reset()">リセット</button>
+                <button class="btn" onclick="visualization.addRandomNodes()">要素追加</button>
+                <button class="btn" onclick="visualization.toggleAnimation()">アニメーション切替</button>
+            </div>
+            
+            <div class="status">
+                接続数: <span id="connectionCount">0</span> | ノード数: <span id="nodeCount">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Node {
+            constructor(x, y, type = 'circle') {
+                this.x = x;
+                this.y = y;
+                this.targetX = x;
+                this.targetY = y;
+                this.type = type; // 'circle', 'triangle', 'square', 'diamond'
+                this.size = Math.random() * 15 + 10;
+                this.targetSize = this.size;
+                this.connections = [];
+                this.energy = 0;
+                this.phase = Math.random() * Math.PI * 2;
+                this.opacity = 0.3 + Math.random() * 0.7;
+                this.discovered = false;
+                this.pulseIntensity = 0;
+                this.age = 0;
+            }
+
+            update(mouseX, mouseY, isMousePressed) {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // マウス近接効果
+                if (distance < 100) {
+                    this.energy = Math.min(1, this.energy + 0.02);
+                    if (!this.discovered) {
+                        this.discovered = true;
+                        this.pulseIntensity = 1;
+                    }
+                } else {
+                    this.energy = Math.max(0, this.energy - 0.01);
+                }
+
+                // パルス効果の減衰
+                this.pulseIntensity = Math.max(0, this.pulseIntensity - 0.02);
+
+                // 位置の更新（緩やかな動き）
+                this.x += (this.targetX - this.x) * 0.02;
+                this.y += (this.targetY - this.y) * 0.02;
+                
+                // サイズの更新
+                const energyBonus = this.energy * 8;
+                const pulseBonus = Math.sin(this.age * 0.1) * this.pulseIntensity * 5;
+                this.targetSize = this.size + energyBonus + pulseBonus;
+                
+                // 位相更新
+                this.phase += 0.02;
+                this.age++;
+                
+                // 微細な揺らぎ
+                if (this.discovered) {
+                    this.targetX += Math.sin(this.phase) * 0.5;
+                    this.targetY += Math.cos(this.phase * 1.1) * 0.5;
+                }
+            }
+
+            draw(ctx) {
+                const alpha = this.opacity + this.energy * 0.5;
+                const currentSize = this.targetSize;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = '#2c3e50';
+                ctx.fillStyle = this.discovered ? '#34495e' : 'transparent';
+                ctx.lineWidth = 1.5 + this.energy * 2;
+
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.phase * 0.5);
+
+                switch (this.type) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, currentSize, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    
+                    case 'triangle':
+                        ctx.beginPath();
+                        for (let i = 0; i < 3; i++) {
+                            const angle = (i * Math.PI * 2) / 3;
+                            const x = Math.cos(angle) * currentSize;
+                            const y = Math.sin(angle) * currentSize;
+                            if (i === 0) ctx.moveTo(x, y);
+                            else ctx.lineTo(x, y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    
+                    case 'square':
+                        ctx.beginPath();
+                        ctx.rect(-currentSize, -currentSize, currentSize * 2, currentSize * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    
+                    case 'diamond':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -currentSize);
+                        ctx.lineTo(currentSize, 0);
+                        ctx.lineTo(0, currentSize);
+                        ctx.lineTo(-currentSize, 0);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                }
+
+                ctx.restore();
+            }
+
+            isNear(x, y, threshold = 50) {
+                const dx = x - this.x;
+                const dy = y - this.y;
+                return Math.sqrt(dx * dx + dy * dy) < threshold;
+            }
+        }
+
+        class Connection {
+            constructor(node1, node2) {
+                this.node1 = node1;
+                this.node2 = node2;
+                this.strength = 0;
+                this.targetStrength = 1;
+                this.age = 0;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+                this.flowDirection = Math.random() < 0.5 ? 1 : -1;
+            }
+
+            update() {
+                this.strength += (this.targetStrength - this.strength) * 0.05;
+                this.age++;
+                this.pulsePhase += 0.03;
+            }
+
+            draw(ctx) {
+                if (this.strength < 0.01) return;
+
+                const alpha = this.strength * 0.6;
+                const pulse = (Math.sin(this.pulsePhase) + 1) * 0.5;
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = '#34495e';
+                ctx.lineWidth = 1 + pulse * 2;
+                ctx.setLineDash([5, 5]);
+                ctx.lineDashOffset = this.age * this.flowDirection * 0.5;
+
+                // 曲線的な接続線
+                const midX = (this.node1.x + this.node2.x) / 2;
+                const midY = (this.node1.y + this.node2.y) / 2;
+                const offset = Math.sin(this.age * 0.02) * 20;
+                
+                ctx.beginPath();
+                ctx.moveTo(this.node1.x, this.node1.y);
+                ctx.quadraticCurveTo(midX + offset, midY + offset, this.node2.x, this.node2.y);
+                ctx.stroke();
+
+                // エネルギーフロー効果
+                if (pulse > 0.7) {
+                    ctx.globalAlpha = alpha * pulse;
+                    ctx.fillStyle = '#34495e';
+                    ctx.beginPath();
+                    ctx.arc(midX + offset, midY + offset, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class CreativityVisualization {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.nodes = [];
+                this.connections = [];
+                this.mouseX = 0;
+                this.mouseY = 0;
+                this.isMousePressed = false;
+                this.animationEnabled = true;
+                this.isAnimating = true;
+                
+                this.setupCanvas();
+                this.initializeNodes();
+                this.setupEventListeners();
+                this.animate();
+            }
+
+            setupCanvas() {
+                const resize = () => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    this.canvas.width = rect.width * window.devicePixelRatio;
+                    this.canvas.height = rect.height * window.devicePixelRatio;
+                    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                };
+                
+                resize();
+                window.addEventListener('resize', resize);
+            }
+
+            initializeNodes() {
+                const types = ['circle', 'triangle', 'square', 'diamond'];
+                const nodeCount = 12;
+                
+                for (let i = 0; i < nodeCount; i++) {
+                    const x = Math.random() * (this.canvas.width / window.devicePixelRatio - 100) + 50;
+                    const y = Math.random() * (this.canvas.height / window.devicePixelRatio - 100) + 50;
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    this.nodes.push(new Node(x, y, type));
+                }
+                
+                this.updateStatus();
+            }
+
+            setupEventListeners() {
+                const getMousePos = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    return {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+                };
+
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const pos = getMousePos(e);
+                    this.mouseX = pos.x;
+                    this.mouseY = pos.y;
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.isMousePressed = true;
+                    this.handleClick();
+                });
+
+                this.canvas.addEventListener('mouseup', () => {
+                    this.isMousePressed = false;
+                });
+
+                this.canvas.addEventListener('mouseleave', () => {
+                    this.mouseX = -100;
+                    this.mouseY = -100;
+                    this.isMousePressed = false;
+                });
+
+                // タッチサポート
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const pos = getMousePos(touch);
+                    this.mouseX = pos.x;
+                    this.mouseY = pos.y;
+                    this.isMousePressed = true;
+                    this.handleClick();
+                });
+
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const pos = getMousePos(touch);
+                    this.mouseX = pos.x;
+                    this.mouseY = pos.y;
+                });
+
+                this.canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.isMousePressed = false;
+                });
+            }
+
+            handleClick() {
+                // 近くのノードを見つけて接続を作成
+                const nearbyNodes = this.nodes.filter(node => 
+                    node.isNear(this.mouseX, this.mouseY, 80)
+                );
+
+                if (nearbyNodes.length >= 2) {
+                    const node1 = nearbyNodes[0];
+                    const node2 = nearbyNodes[1];
+                    
+                    // 既存の接続をチェック
+                    const existingConnection = this.connections.find(conn => 
+                        (conn.node1 === node1 && conn.node2 === node2) ||
+                        (conn.node1 === node2 && conn.node2 === node1)
+                    );
+
+                    if (!existingConnection) {
+                        this.connections.push(new Connection(node1, node2));
+                        this.triggerCreativeEffect(node1, node2);
+                        this.updateStatus();
+                    }
+                } else if (nearbyNodes.length === 1) {
+                    // 単一ノードの強化
+                    nearbyNodes[0].pulseIntensity = 1;
+                    nearbyNodes[0].discovered = true;
+                }
+            }
+
+            triggerCreativeEffect(node1, node2) {
+                // 創造的効果：新しいノードの生成
+                const midX = (node1.x + node2.x) / 2 + (Math.random() - 0.5) * 50;
+                const midY = (node1.y + node2.y) / 2 + (Math.random() - 0.5) * 50;
+                const types = ['circle', 'triangle', 'square', 'diamond'];
+                const newType = types[Math.floor(Math.random() * types.length)];
+                
+                if (Math.random() < 0.3) { // 30%の確率で新しいノードを生成
+                    const newNode = new Node(midX, midY, newType);
+                    newNode.discovered = true;
+                    newNode.pulseIntensity = 1;
+                    this.nodes.push(newNode);
+                }
+
+                // 既存ノードのエネルギー増加
+                node1.pulseIntensity = 1;
+                node2.pulseIntensity = 1;
+            }
+
+            update() {
+                if (!this.animationEnabled) return;
+
+                // ノードの更新
+                this.nodes.forEach(node => {
+                    node.update(this.mouseX, this.mouseY, this.isMousePressed);
+                });
+
+                // 接続の更新
+                this.connections.forEach(connection => {
+                    connection.update();
+                });
+
+                // 自然な接続の形成（低確率）
+                if (Math.random() < 0.001 && this.connections.length < this.nodes.length * 2) {
+                    this.createNaturalConnection();
+                }
+            }
+
+            createNaturalConnection() {
+                const unconnectedPairs = [];
+                
+                for (let i = 0; i < this.nodes.length; i++) {
+                    for (let j = i + 1; j < this.nodes.length; j++) {
+                        const node1 = this.nodes[i];
+                        const node2 = this.nodes[j];
+                        const distance = Math.sqrt(
+                            (node1.x - node2.x) ** 2 + (node1.y - node2.y) ** 2
+                        );
+                        
+                        if (distance < 150 && !this.connections.find(conn => 
+                            (conn.node1 === node1 && conn.node2 === node2) ||
+                            (conn.node1 === node2 && conn.node2 === node1)
+                        )) {
+                            unconnectedPairs.push([node1, node2]);
+                        }
+                    }
+                }
+
+                if (unconnectedPairs.length > 0) {
+                    const randomPair = unconnectedPairs[Math.floor(Math.random() * unconnectedPairs.length)];
+                    this.connections.push(new Connection(randomPair[0], randomPair[1]));
+                    this.updateStatus();
+                }
+            }
+
+            draw() {
+                // 背景のクリア
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 背景グラデーション
+                const gradient = this.ctx.createRadialGradient(
+                    this.mouseX, this.mouseY, 0,
+                    this.mouseX, this.mouseY, 200
+                );
+                gradient.addColorStop(0, 'rgba(52, 73, 94, 0.02)');
+                gradient.addColorStop(1, 'rgba(52, 73, 94, 0)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // 接続の描画
+                this.connections.forEach(connection => {
+                    connection.draw(this.ctx);
+                });
+
+                // ノードの描画
+                this.nodes.forEach(node => {
+                    node.draw(this.ctx);
+                });
+
+                // マウス周辺の探索エリア表示
+                if (this.mouseX > 0 && this.mouseY > 0) {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = 0.1;
+                    this.ctx.strokeStyle = '#34495e';
+                    this.ctx.setLineDash([2, 2]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.mouseX, this.mouseY, 80, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                }
+            }
+
+            animate() {
+                if (this.isAnimating) {
+                    this.update();
+                    this.draw();
+                }
+                requestAnimationFrame(() => this.animate());
+            }
+
+            reset() {
+                this.nodes = [];
+                this.connections = [];
+                this.initializeNodes();
+            }
+
+            addRandomNodes() {
+                const types = ['circle', 'triangle', 'square', 'diamond'];
+                for (let i = 0; i < 3; i++) {
+                    const x = Math.random() * (this.canvas.width / window.devicePixelRatio - 100) + 50;
+                    const y = Math.random() * (this.canvas.height / window.devicePixelRatio - 100) + 50;
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    this.nodes.push(new Node(x, y, type));
+                }
+                this.updateStatus();
+            }
+
+            toggleAnimation() {
+                this.animationEnabled = !this.animationEnabled;
+                if (!this.animationEnabled) {
+                    this.isAnimating = false;
+                } else {
+                    this.isAnimating = true;
+                }
+            }
+
+            updateStatus() {
+                document.getElementById('connectionCount').textContent = this.connections.length;
+                document.getElementById('nodeCount').textContent = this.nodes.length;
+            }
+        }
+
+        // アプリケーションの初期化
+        let visualization;
+        
+        window.addEventListener('load', () => {
+            visualization = new CreativityVisualization('creativityCanvas');
+            
+            // フェードインアニメーションの開始
+            document.querySelectorAll('.fade-in').forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.2}s`;
+            });
+        });
+    </script>
+</body>
+</html>
